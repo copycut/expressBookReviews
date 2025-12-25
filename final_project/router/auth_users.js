@@ -7,35 +7,25 @@ const secretKey = require('../secret-key.js');
 let users = [];
 
 const isValid = (username) => {
-  const userFound = users.find((user) => user.username === username);
-
-  if (userFound) return true;
-  return false;
+  const userWithSameName = users.filter((user) => user.username === username);
+  return userWithSameName.length > 0;
 };
 
 const authenticatedUser = (username, password) => {
-  const userFound = users.find(
+  const validUser = users.filter(
     (user) => user.username === username && user.password === password
   );
-
-  if (userFound) return true;
-  return false;
+  return validUser.length > 0;
 };
 
 //only registered users can login
 regd_users.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  if (!username) {
+  if (!username || !password) {
     return res
       .status(404)
-      .json({ message: 'Error logging in: missing user name' });
-  }
-
-  if (!password) {
-    return res
-      .status(404)
-      .json({ message: 'Error logging in: missing password' });
+      .json({ message: 'Error logging in: missing user name or password' });
   }
 
   if (!isValid(username)) {
@@ -48,19 +38,12 @@ regd_users.post('/login', (req, res) => {
     const token = jwt.sign({ username: username }, secretKey, {
       expiresIn: '1h'
     });
-    const decoded = jwt.decode(token, secretKey);
 
-    if (!decoded) {
-      return res
-        .status(403)
-        .json({ message: 'Error logging in: invalid token' });
-    }
+    req.session.authorization = { accessToken: token };
 
-    return res
-      .status(200)
-      .json({
-        message: `Hello ${decoded.username}, you are successfully logged in`
-      });
+    return res.status(200).json({
+      message: `Hello ${username}, you are successfully logged in`
+    });
   }
 
   return res
@@ -68,10 +51,47 @@ regd_users.post('/login', (req, res) => {
     .json({ message: 'Invalid Login. Check username and password' });
 });
 
+regd_users.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(404).json({
+      message: 'Error registering user: missing user name or password'
+    });
+  }
+
+  if (isValid(username)) {
+    return res.status(208).json({
+      message: 'User already exists! Please choose a different username'
+    });
+  }
+
+  users.push({ username, password });
+
+  return res.status(200).json({ message: 'User registered successfully.' });
+});
+
 // Add a book review
 regd_users.put('/auth/review/:isbn', (req, res) => {
-  //Write your code here
-  return res.status(300).json({ message: 'Yet to be implemented' });
+  const { isbn } = req.params;
+  const { review, username } = req.body;
+  let book = books[isbn];
+
+  if (!book) {
+    return res
+      .status(404)
+      .json({ message: `Book with ISBN ${isbn} not found.` });
+  }
+
+  if (!book.reviews) {
+    book.reviews = {};
+  }
+
+  book.reviews[username] = review;
+
+  return res
+    .status(200)
+    .json({ message: `Review for the book with ISBN ${isbn} added/updated.` });
 });
 
 module.exports.authenticated = regd_users;

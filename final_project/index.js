@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const session = require('express-session');
 const customer_routes = require('./router/auth_users.js').authenticated;
 const genl_routes = require('./router/general.js').general;
-const users = require('./router/auth_users.js').users;
 const secretKey = require('./secret-key.js');
 
 const PORT = 8000;
@@ -20,19 +19,22 @@ app.use(
   })
 );
 
-app.use('/customer/auth/*', function auth(req, res, next) {
-  const { username, password } = req.body;
+app.use(session({ secret: secretKey, resave: true, saveUninitialized: true }));
 
-  if (username && password) {
-    users.push({ username, password });
-    const token = jwt.sign({ username: username }, secretKey, {
-      expiresIn: '1h'
-    });
-    req.session.authorization = { accessToken: token };
-    return res.json({ token });
+app.use('/customer/auth/*', function auth(req, res, next) {
+  if (!req.session.authorization) {
+    return res.status(403).json({ message: 'User not logged in' });
   }
 
-  res.status(403).json({ message: 'Invalid credentials' });
+  const token = req.session.authorization['accessToken'];
+
+  jwt.verify(token, secretKey, (err, decodedUser) => {
+    if (err) {
+      return res.status(403).json({ message: 'User not authenticated' });
+    }
+    req.user = decodedUser;
+    next();
+  });
 });
 
 app.use('/customer', customer_routes);
