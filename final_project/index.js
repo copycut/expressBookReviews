@@ -3,8 +3,9 @@ const jwt = require('jsonwebtoken');
 const session = require('express-session');
 const customer_routes = require('./router/auth_users.js').authenticated;
 const genl_routes = require('./router/general.js').general;
+const users = require('./router/auth_users.js').users;
+const secretKey = require('./secret-key.js');
 
-const secretKy = 'strongSecretKey';
 const PORT = 8000;
 const app = express();
 
@@ -22,8 +23,9 @@ app.use(
 app.use('/customer/auth/*', function auth(req, res, next) {
   const { username, password } = req.body;
 
-  if (username === 'user' && password === 'password') {
-    const token = jwt.sign({ username: username }, secretKy, {
+  if (username && password) {
+    users.push({ username, password });
+    const token = jwt.sign({ username: username }, secretKey, {
       expiresIn: '1h'
     });
     req.session.authorization = { accessToken: token };
@@ -37,3 +39,5 @@ app.use('/customer', customer_routes);
 app.use('/', genl_routes);
 
 app.listen(PORT, () => console.log('Server is running'));
+
+module.exports.secretKey = secretKey;
