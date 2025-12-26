@@ -1,34 +1,16 @@
-let books = {
-  1: { author: 'Chinua Achebe', title: 'Things Fall Apart', reviews: {} },
-  2: { author: 'Hans Christian Andersen', title: 'Fairy tales', reviews: {} },
-  3: { author: 'Dante Alighieri', title: 'The Divine Comedy', reviews: {} },
-  4: { author: 'Unknown', title: 'The Epic Of Gilgamesh', reviews: {} },
-  5: { author: 'Unknown', title: 'The Book Of Job', reviews: {} },
-  6: { author: 'Unknown', title: 'One Thousand and One Nights', reviews: {} },
-  7: { author: 'Unknown', title: "Nj\u00e1l's Saga", reviews: {} },
-  8: { author: 'Jane Austen', title: 'Pride and Prejudice', reviews: {} },
-  9: {
-    author: 'Honor\u00e9 de Balzac',
-    title: 'Le P\u00e8re Goriot',
-    reviews: {}
-  },
-  10: {
-    author: 'Samuel Beckett',
-    title: 'Molloy, Malone Dies, The Unnamable, the trilogy',
-    reviews: {}
-  }
-};
+const axios = require('axios').default;
 
-function getBooks() {
-  const bookPromises = new Promise((resolve, reject) => {
-    if (books) {
-      setTimeout(() => resolve(books), 1000); // simulate async operation
-    } else {
-      reject('No books available');
-    }
-  });
-  return bookPromises;
+// Simulate asynchronous retrieval of books with axios from a remote JSON file
+function fetchBooks() {
+  return axios
+    .get(
+      'https://github.com/copycut/expressBookReviews/blob/assignment/final_project/router/books.json?raw=true'
+    )
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error('Error fetching books:', error);
+      return null;
+    });
 }
 
-module.exports = books;
-module.exports.getBooks = getBooks;
+module.exports.fetchBooks = fetchBooks;
