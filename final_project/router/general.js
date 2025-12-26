@@ -1,5 +1,5 @@
 const express = require('express');
-let getBooks = require('./booksdb.js').getBooks;
+let fetchBooks = require('./booksdb.js').fetchBooks;
 let isValid = require('./auth_users.js').isValid;
 let users = require('./auth_users.js').users;
 const public_users = express.Router();
@@ -11,14 +11,19 @@ public_users.post('/register', (req, res) => {
 
 // Get the book list available in the shop
 public_users.get('/', async function (req, res) {
-  const books = await getBooks();
-  res.status(200).json(JSON.stringify(books));
+  const books = await fetchBooks();
+
+  if (!books) {
+    return res.status(500).json({ message: 'Error retrieving book list' });
+  }
+
+  res.status(200).json(books);
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', async function (req, res) {
   const isbn = req.params.isbn;
-  const books = await getBooks();
+  const books = await fetchBooks();
   const book = books[isbn];
 
   if (book) {
@@ -32,7 +37,7 @@ public_users.get('/isbn/:isbn', async function (req, res) {
 public_users.get('/author/:author', async function (req, res) {
   const author = req.params.author;
   const cleanAuthor = decodeURIComponent(author);
-  const books = await getBooks();
+  const books = await fetchBooks();
   const results = [];
 
   for (const isbn in books) {
@@ -52,7 +57,7 @@ public_users.get('/author/:author', async function (req, res) {
 public_users.get('/title/:title', async function (req, res) {
   const title = req.params.title;
   const cleanTitle = decodeURIComponent(title);
-  const books = await getBooks();
+  const books = await fetchBooks();
   const results = [];
 
   for (const isbn in books) {
@@ -71,7 +76,7 @@ public_users.get('/title/:title', async function (req, res) {
 //  Get book review
 public_users.get('/review/:isbn', async function (req, res) {
   const isbn = req.params.isbn;
-  const books = await getBooks();
+  const books = await fetchBooks();
   const book = books[isbn];
 
   if (book?.reviews) {
