@@ -4,7 +4,7 @@ const axios = require('axios').default;
 function fetchBooks() {
   return axios
     .get(
-      'https://github.com/copycut/expressBookReviews/blob/assignment/final_project/router/books.json?raw=true'
+      'https://raw.githubusercontent.com/copycut/expressBookReviews/refs/heads/main/final_project/router/books.json?raw=true'
     )
     .then((response) => response.data)
     .catch((error) => {
